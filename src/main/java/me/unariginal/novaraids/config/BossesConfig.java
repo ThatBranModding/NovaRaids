@@ -431,6 +431,12 @@ public class BossesConfig {
         } else {
             throw new NullPointerException("Boss must have a category weight!");
         }
+        boolean announceRaid = !ConfigHelper.checkProperty(config, "announceRaid", location)
+                || config.get("announceRaid").getAsBoolean();
+
+
+
+
 
         // Pokemon Details
         Species species;
@@ -652,6 +658,7 @@ public class BossesConfig {
         int base_health;
         int health_increase_per_player = 0;
         boolean apply_glowing = false;
+
         Map<String, Double> locations = new HashMap<>();
         if (ConfigHelper.checkProperty(config, "boss_details", location)) {
             JsonObject boss_details = config.get("boss_details").getAsJsonObject();
@@ -669,6 +676,7 @@ public class BossesConfig {
             if (ConfigHelper.checkProperty(boss_details, "apply_glowing", location)) {
                 apply_glowing = boss_details.get("apply_glowing").getAsBoolean();
             }
+
             if (ConfigHelper.checkProperty(boss_details, "locations", location)) {
                 JsonArray locations_array = boss_details.get("locations").getAsJsonArray();
                 for (JsonElement location_element : locations_array) {
@@ -1079,7 +1087,8 @@ public class BossesConfig {
                 locations,
                 itemSettings,
                 raidDetails,
-                catch_settings
+                catch_settings,
+                announceRaid
         ));
     }
 

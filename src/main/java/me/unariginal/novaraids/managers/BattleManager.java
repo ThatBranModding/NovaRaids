@@ -18,6 +18,7 @@ import com.cobblemon.mod.common.pokemon.IVs;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.cobblemon.mod.common.pokemon.properties.UncatchableProperty;
 import kotlin.Unit;
+import me.unariginal.novaraids.NovaRaids;
 import me.unariginal.novaraids.data.bosssettings.CatchSettings;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
@@ -59,10 +60,6 @@ public class BattleManager {
         pokemon.setPersistentData$common(data);
 
         CatchSettings settings = raid.boss_info().catch_settings();
-
-        if (settings.species_override() != raid.boss_info().pokemonDetails().species()) {
-            pokemon.setSpecies(settings.species_override());
-        }
 
         if (shiny_chance > 0) {
             AtomicReference<Float> new_shiny = new AtomicReference<>(shiny_chance);
@@ -152,7 +149,7 @@ public class BattleManager {
         pokemon.setLevel(settings.level_override());
 
         PokemonEntity boss_clone = pokemon.sendOut(raid.raidBoss_location().world(), player.getPos().offset(player.getFacing(), 1), null, entity -> {
-            entity.addStatusEffect(new StatusEffectInstance(StatusEffects.SLOWNESS, 999999, 9999, false, false));
+            entity.addStatusEffect(new StatusEffectInstance(StatusEffects.SLOWNESS, -1, 9999, false, false));
             entity.setNoGravity(true);
             entity.setMovementSpeed(0.0f);
             entity.setDrops(new DropTable());
@@ -183,7 +180,10 @@ public class BattleManager {
         pokemon.setScaleModifier(0.1f);
 
         PokemonEntity boss_clone = pokemon.sendOut(raid.raidBoss_location().world(), raid.raidBoss_location().pos(), null, entity -> {
-            entity.addStatusEffect(new StatusEffectInstance(StatusEffects.SLOWNESS, 999999, 9999, false, false));
+            if (!NovaRaids.INSTANCE.debug) {
+                entity.addStatusEffect(new StatusEffectInstance(StatusEffects.INVISIBILITY, -1, 9999, false, false));
+            }
+            entity.addStatusEffect(new StatusEffectInstance(StatusEffects.SLOWNESS, -1, 9999, false, false));
             entity.setNoGravity(true);
             entity.setAiDisabled(true);
             entity.setMovementSpeed(0.0f);

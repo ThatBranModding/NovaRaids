@@ -161,7 +161,10 @@ public class Raid {
         phase_length = boss_info.raid_details().setup_phase_time();
         phase_start_time = nr.server().getOverworld().getTime();
 
-        broadcast(TextUtils.deserialize(TextUtils.parse(messages.getMessage("start_pre_phase"), this)));
+        if (boss_info.announceRaid()) {
+            broadcast(TextUtils.deserialize(TextUtils.parse(messages.getMessage("start_pre_phase"), this)));
+        }
+
         nr.messagesConfig().execute_command(this);
 
         if (WebhookHandler.webhook_toggle && WebhookHandler.start_embed_enabled) {
@@ -319,7 +322,7 @@ public class Raid {
                     ServerPlayerEntity player = nr.server().getPlayerManager().getPlayer(entry.getKey());
                     if (player != null) {
                         if (!already_catching.contains(player)) {
-                            if (!placement.require_damage() || (damage_by_player.containsKey(player.getUuid()) && damage_by_player.get(player.getUuid()) > 0) && participating_players.contains(player.getUuid())) {
+                            if (!placement.require_damage() || (damage_by_player.containsKey(player.getUuid()) && damage_by_player.get(player.getUuid()) > 0)) {
                                 players_to_reward.add(player);
                             }
                         }
@@ -502,7 +505,7 @@ public class Raid {
     }
 
     public void addTask(ServerWorld world, Long delay, Runnable action) {
-        long current_tick = NovaRaids.INSTANCE.server().getOverworld().getTime();
+        long current_tick = world.getTime();
         long execute_tick = current_tick + delay;
 
         Task task = new Task(world, execute_tick, action);
@@ -538,12 +541,12 @@ public class Raid {
         Vec3d pos = raidBoss_location.pos();
         return raidBoss_pokemon_uncatchable.sendOut(world, pos, null, entity -> {
             entity.setPersistent();
-            entity.addStatusEffect(new StatusEffectInstance(StatusEffects.SLOWNESS, 999999, 9999, true, false));
+            entity.addStatusEffect(new StatusEffectInstance(StatusEffects.SLOWNESS, -1, 9999, true, false));
             entity.setMovementSpeed(0.0f);
             entity.setNoGravity(true);
             entity.setAiDisabled(true);
             if (boss_info.apply_glowing()) {
-                entity.addStatusEffect(new StatusEffectInstance(StatusEffects.GLOWING, 999999, 9999, true, false));
+                entity.addStatusEffect(new StatusEffectInstance(StatusEffects.GLOWING, -1, 9999, true, false));
             }
             entity.setInvulnerable(true);
             entity.setBodyYaw(raidBoss_location.boss_facing_direction());
@@ -561,7 +564,7 @@ public class Raid {
             if (player != null) {
                 PokemonBattle battle = BattleRegistry.INSTANCE.getBattleByParticipatingPlayer(player);
                 if (battle != null) {
-                    battle.stop();
+                    battle.end();
                 }
             }
         }
@@ -870,6 +873,7 @@ public class Raid {
             for (int i = 0; i < n - 1; i++) {
                 Map.Entry<UUID, Integer> e1 = leaderboard_list.get(i);
                 Map.Entry<UUID, Integer> e2 = leaderboard_list.get(i + 1);
+                System.out.println(e1.getKey() + " : " + e1.getValue() + " vs " + e2.getKey() + " : " + e2.getValue());
                 boolean duplicate = false;
                 for (int value : duplicates) {
                     if (e1.getValue() == value) {

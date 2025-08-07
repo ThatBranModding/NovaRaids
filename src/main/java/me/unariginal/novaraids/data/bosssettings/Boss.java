@@ -16,7 +16,9 @@ public record Boss(String boss_id,
                    Map<String, Double> spawn_locations,
                    ItemSettings item_settings,
                    RaidDetails raid_details,
-                   CatchSettings catch_settings) {
+                   CatchSettings catch_settings,
+                   boolean announceRaid
+    ){
     public String choose_location() {
         Map.Entry<?, Double> entry = RandomUtils.getRandomEntry(spawn_locations);
         if (entry != null) {

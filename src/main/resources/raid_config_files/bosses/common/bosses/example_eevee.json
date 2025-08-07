@@ -2,6 +2,7 @@
   "boss_id": "example_eevee",
   "global_weight": 15.0,
   "category_weight": 10.0,
+  "announceRaid": true,
   "pokemon_details": {
     "species": "eevee",
     "level": 50,
