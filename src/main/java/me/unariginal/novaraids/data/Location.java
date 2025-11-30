@@ -7,11 +7,14 @@ public record Location(String id,
                        String name,
                        Vec3d pos,
                        ServerWorld world,
-                       int border_radius,
-                       int boss_pushback_radius,
-                       float boss_facing_direction,
-                       boolean use_set_join_location,
-                       Vec3d join_location,
+                       int borderRadius,
+                       int bossPushbackRadius,
+                       float bossFacingDirection,
+                       boolean useSetJoinLocation,
+                       Vec3d joinLocation,
                        float yaw,
                        float pitch) {
+    public boolean isPointInLocation(double x, double z) {
+        return Math.pow(x - pos.x, 2) + Math.pow(z - pos.z, 2) <= Math.pow(borderRadius, 2);
+    }
 }

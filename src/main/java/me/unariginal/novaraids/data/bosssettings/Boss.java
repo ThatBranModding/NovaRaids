@@ -4,23 +4,25 @@ import me.unariginal.novaraids.utils.RandomUtils;
 
 import java.util.Map;
 
-public record Boss(String boss_id,
-                   String category_id,
-                   double global_weight,
-                   double category_weight,
+public record Boss(String bossId,
+                   String categoryId,
+                   double globalWeight,
+                   double categoryWeight,
                    PokemonDetails pokemonDetails,
-                   String display_name,
-                   int base_health,
-                   int health_increase_per_player,
-                   boolean apply_glowing,
-                   Map<String, Double> spawn_locations,
-                   ItemSettings item_settings,
-                   RaidDetails raid_details,
-                   CatchSettings catch_settings,
-                   boolean announceRaid
-    ){
-    public String choose_location() {
-        Map.Entry<?, Double> entry = RandomUtils.getRandomEntry(spawn_locations);
+                   String displayName,
+                   int baseHealth,
+                   int healthIncreasePerPlayer,
+                   boolean applyGlowing,
+                   int aiSkillLevel,
+                   boolean rerollFeaturesEachBattle,
+                   boolean rerollGimmickEachBattle,
+                   Map<String, Double> spawnLocations,
+                   ItemSettings itemSettings,
+                   RaidDetails raidDetails,
+                   CatchSettings catchSettings) {
+
+    public String chooseLocation() {
+        Map.Entry<?, Double> entry = RandomUtils.getRandomEntry(spawnLocations);
         if (entry != null) {
             return (String) entry.getKey();
         }

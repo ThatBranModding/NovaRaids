@@ -1,6 +1,7 @@
 package me.unariginal.novaraids.config;
 
-import com.google.gson.JsonElement;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import me.unariginal.novaraids.NovaRaids;
@@ -18,11 +19,8 @@ public class RewardPresetsConfig {
         try {
             loadConfig();
         } catch (IOException | NullPointerException | UnsupportedOperationException e) {
-            NovaRaids.INSTANCE.loaded_properly = false;
-            NovaRaids.INSTANCE.logError("[RAIDS] Failed to load reward presets file. " + e.getMessage());
-            for (StackTraceElement element : e.getStackTrace()) {
-                NovaRaids.INSTANCE.logError("  " + element.toString());
-            }
+            NovaRaids.LOADED = false;
+            NovaRaids.LOGGER.error("[NovaRaids] Failed to load reward presets file.", e);
         }
     }
 
@@ -33,7 +31,10 @@ public class RewardPresetsConfig {
         }
 
         File file = FabricLoader.getInstance().getConfigDir().resolve("NovaRaids/reward_presets.json").toFile();
-        if (file.createNewFile()) {
+        JsonObject config = new JsonObject();
+        if (file.exists()) config = JsonParser.parseReader(new FileReader(file)).getAsJsonObject();
+
+        if (config.keySet().isEmpty()) {
             InputStream stream = NovaRaids.class.getResourceAsStream("/raid_config_files/reward_presets.json");
             assert stream != null;
             OutputStream out = new FileOutputStream(file);
@@ -46,19 +47,28 @@ public class RewardPresetsConfig {
 
             stream.close();
             out.close();
+
+            config = JsonParser.parseReader(new FileReader(file)).getAsJsonObject();
         }
 
-        JsonElement root = JsonParser.parseReader(new FileReader(file));
-        assert root != null;
-        JsonObject config = root.getAsJsonObject();
         for (String key : config.keySet()) {
-            JsonObject reward_object = config.getAsJsonObject(key);
-            Reward reward = ConfigHelper.getReward(reward_object, key, "reward_presets");
-            if (reward == null) {
-                continue;
-            }
+            JsonObject rewardObject = config.getAsJsonObject(key);
+            Reward reward = ConfigHelper.getReward(rewardObject, key);
+            if (reward == null) continue;
             rewards.add(reward);
         }
+
+        for (Reward reward : rewards) {
+            config.remove(reward.name());
+            config.add(reward.name(), reward.rewardObject());
+        }
+
+        file.delete();
+        file.createNewFile();
+        Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+        Writer writer = new FileWriter(file);
+        gson.toJson(config, writer);
+        writer.close();
     }
 
     public Reward getReward(String id) {

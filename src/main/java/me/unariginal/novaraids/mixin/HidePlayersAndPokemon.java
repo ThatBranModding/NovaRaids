@@ -1,7 +1,7 @@
 package me.unariginal.novaraids.mixin;
 
-import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.api.battles.model.PokemonBattle;
+import com.cobblemon.mod.common.battles.BattleRegistry;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import me.lucko.fabric.api.permissions.v0.Permissions;
@@ -22,22 +22,32 @@ public class HidePlayersAndPokemon {
     public void canBeSpectated(ServerPlayerEntity spectator, CallbackInfoReturnable<Boolean> cir) {
         Entity self = (Entity) (Object) this;
         if (self instanceof PokemonEntity pokemonEntity) {
-            if (NovaRaids.INSTANCE.config().hide_other_catch_encounters && !Permissions.check(spectator, "novaraids.showpokemon")) {
+            Pokemon pokemon = pokemonEntity.getPokemon();
+            if (pokemon != null) {
+                if (pokemon.getPersistentData().contains("raid_entity")
+                        && pokemon.getPersistentData().contains("boss_clone")
+                        && pokemon.getPersistentData().contains("battle_clone")) {
+                    if (!NovaRaids.INSTANCE.debug) {
+                        cir.setReturnValue(false);
+                    }
+                }
+            }
+
+            if (NovaRaids.INSTANCE.config().hideOtherCatchEncounters && !Permissions.check(spectator, "novaraids.showpokemon")) {
                 boolean inRaid = false;
-                for (Raid raid : NovaRaids.INSTANCE.active_raids().values()) {
-                    if (raid.participating_players().contains(spectator.getUuid())) {
+                for (Raid raid : NovaRaids.INSTANCE.activeRaids().values()) {
+                    if (raid.participatingPlayers().contains(spectator.getUuid())) {
                         inRaid = true;
                         break;
                     }
                 }
                 if (inRaid) {
-                    Pokemon pokemon = pokemonEntity.getPokemon();
                     if (pokemon != null) {
                         if (pokemon.getPersistentData().contains("catch_encounter")) {
                             if (pokemonEntity.isBattling()) {
                                 UUID battle_id = pokemonEntity.getBattleId();
                                 if (battle_id != null) {
-                                    PokemonBattle battle = Cobblemon.INSTANCE.getBattleRegistry().getBattle(battle_id);
+                                    PokemonBattle battle = BattleRegistry.getBattle(battle_id);
                                     if (battle != null) {
                                         if (!battle.getPlayers().contains(spectator)) {
                                             cir.setReturnValue(false);
@@ -49,25 +59,25 @@ public class HidePlayersAndPokemon {
                     }
                 }
             }
-            if (NovaRaids.INSTANCE.config().hide_other_pokemon_in_raid && !Permissions.check(spectator, "novaraids.showpokemon")) {
+            if (NovaRaids.INSTANCE.config().hideOtherPokemonInRaid && !Permissions.check(spectator, "novaraids.showpokemon")) {
                 boolean inRaid = false;
-                for (Raid raid : NovaRaids.INSTANCE.active_raids().values()) {
-                    if (raid.participating_players().contains(spectator.getUuid())) {
+                for (Raid raid : NovaRaids.INSTANCE.activeRaids().values()) {
+                    if (raid.participatingPlayers().contains(spectator.getUuid())) {
                         inRaid = true;
                         break;
                     }
                 }
                 if (inRaid) {
-                    Pokemon pokemon = pokemonEntity.getPokemon();
                     if (pokemon != null) {
                         if (!pokemon.getPersistentData().contains("raid_entity")) {
                             if (pokemon.isPlayerOwned()) {
                                 ServerPlayerEntity owner = pokemon.getOwnerPlayer();
                                 if (owner != null) {
                                     boolean pokemonInRaid = false;
-                                    for (Raid raid : NovaRaids.INSTANCE.active_raids().values()) {
-                                        if (raid.participating_players().contains(owner.getUuid())) {
+                                    for (Raid raid : NovaRaids.INSTANCE.activeRaids().values()) {
+                                        if (raid.participatingPlayers().contains(owner.getUuid())) {
                                             pokemonInRaid = true;
+                                            break;
                                         }
                                     }
                                     if (!owner.getUuid().equals(spectator.getUuid()) && pokemonInRaid) {
@@ -80,17 +90,17 @@ public class HidePlayersAndPokemon {
                 }
             }
         } else if (self instanceof ServerPlayerEntity serverPlayerEntity) {
-            if (NovaRaids.INSTANCE.config().hide_other_players_in_raid && !Permissions.check(spectator, "novaraids.showplayers")) {
+            if (NovaRaids.INSTANCE.config().hideOtherPlayersInRaid && !Permissions.check(spectator, "novaraids.showplayers")) {
                 boolean inRaid = false;
-                for (Raid raid : NovaRaids.INSTANCE.active_raids().values()) {
-                    if (raid.participating_players().contains(spectator.getUuid())) {
+                for (Raid raid : NovaRaids.INSTANCE.activeRaids().values()) {
+                    if (raid.participatingPlayers().contains(spectator.getUuid())) {
                         inRaid = true;
                         break;
                     }
                 }
                 boolean otherPlayerInRaid = false;
-                for (Raid raid : NovaRaids.INSTANCE.active_raids().values()) {
-                    if (raid.participating_players().contains(serverPlayerEntity.getUuid())) {
+                for (Raid raid : NovaRaids.INSTANCE.activeRaids().values()) {
+                    if (raid.participatingPlayers().contains(serverPlayerEntity.getUuid())) {
                         otherPlayerInRaid = true;
                         break;
                     }

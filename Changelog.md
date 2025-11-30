@@ -1,3 +1,94 @@
+# Nova Raids Beta v0.3.4
+
+## Bug Fixes
+- Category random vouchers will no longer be a copy of category choice vouchers
+
+## Config Changes
+- Added `reduce_large_pokemon_size` boolean to config.json. With this enabled, any pokemon whose hitbox is larger than 1 block will be scaled down to 1 block.
+- Added `disable_spawns_in_arena` boolean to config.json. This disables pokemon spawns in any active raid locations.
+- Added `tera_type` string to bosses/your_boss.json/pokemon_details. This can be any tera type, or "random".
+- Added `gmax_factor` boolean to bosses/your_boss.json/pokemon_details.
+- Added `dynamax_level` integer to bosses/your_boss.json/pokemon_details. This value can be between 0 and, usually, 10. Unless you changed the maximum dynamax level in your cobblemon config.
+- Added `gimmicks` list to bosses/your_boss.json/pokemon_details. 
+  - Gimmick objects are formatted as follows:  
+    ```json
+    "gimmicks": [
+      {
+        "gimmick": "tera",
+        "weight": 1.0
+      }
+    ]
+    ```
+  - Gimmick values can be "tera", "mega", "dynamax", or any traditional variation of those gimmick names.
+  - Currently, there is no visual changes for mega or dynamax on the core boss entity, as I utilize boss clones.
+  - There is no support for z-power at this time, you can set z-moves in the boss's moveset if you wish.
+- Added `reroll_features_each_battle` boolean to bosses/your_boss.json/boss_details. This option will reroll the boss features from pokemon_details for each battle.
+- Added `reroll_gimmick_each_battle` boolean to bosses/your_boss.json/boss_details. This option will reroll the boss gimmick from pokemon_details for each battle.
+- Added `randomize_tera_type` boolean to bosses/your_boss.json/catch_settings.
+- Added `reset_gmax_factor` boolean to bosses/your_boss.json/catch_settings.
+- Added `dynamax_level_override` integer to bosses/your_boss.json/catch_settings.
+---
+# Nova Raids Beta v0.3.3
+- Introduced Cobblemon 1.7 Snapshot support
+---
+# Nova Raids Beta v0.3.2 Hotfix
+- Teleporting away from raids via /home, /spawn, etc. will no longer deal damage to the boss from the battle ending
+- Added experience gain toggle to config.json, with this enabled experience will still not be gained if players manage to flee from the encounter, only from properly defeating the encounter
+- Boss clone battles are properly stopped when needed
+---
+# Nova Raids Beta v0.3.1 Hotfix
+- Teleporting away from raids via /home, /spawn, etc. will no longer deal damage to the boss from the battle ending
+- Added experience gain toggle to config.json, with this enabled experience will still not be gained if players manage to flee from the encounter
+- Boss clone battles are properly stopped when needed
+---
+# Nova Raids Beta v0.3.1 *(Patch Update)*
+
+## Additions
+- Added `/raid schedule` command with the permission node `novaraids.schedule`. This allows the user to view the upcoming raid schedules.
+
+## Config Changes
+- Most config properties will now automatically generate and fill the file with default values if they've been left out.
+- Added `friendship` to boss.json/pokemon_details. (default: 50)
+- Added `friendship_override` to boss.json/catch_settings. (default: 50)
+- Removed `form` from boss.json/pokemon_details.
+- Changed `features` in boss.json/pokemon_details to a weighted list. Previous features will automatically transfer to this new format.
+  - New format:
+  ```json
+  "features": [
+    {
+      "feature": "mega_evolution=mega",
+      "weight": 5.0
+    }
+  ]
+  ```
+- Added `keep_features` to boss.json/catch_settings. (default: false)
+- Added `ai_skill_level` to boss.json/boss_details. This is a value from 0 to 5, 0 is random AI, 5 is the best AI. (default: 3)
+- Added `blacklisted_categories` to messages.json/discord. These categories will not have webhook messages sent for them.
+- Added `blacklisted_bosses` to messages.json/discord. These bosses will not have webhook messages send for them.
+- Added `bosses_have_infinite_pp` to config.json/raid_settings. Setting this to true will give all bosses moves 10,000 PP.
+- Added `automatic_battles` to config.json/raid_settings. Setting this to true will force players into another boss battle after a set delay.
+- Added `automatic_battle_delay_seconds` to config.json/raid_settings. This is the delay before the automatic battle is started, I recommend keeping this above 2 seconds, or it may not work.
+- Added `join_raid_after_voucher_use` to config.json/item_settings/voucher_settings. Setting this to true will have players automatically join the raid they start using a voucher.
+- Added `player_linked_raid_balls` to config.json/item_settings/raid_ball_settings. Disabling this option will allow players to use other player's raid balls.
+- Added `override_category_distribution` to boss.json/raid_details. Enabling this setting will override the full category distribution section, instead of just an individual placement.
+- Renamed `override_category_rewards` in boss.json/raid_details/reward_distribution/places to `override_category_placement` to better fit its functionality.
+
+## Bug Fixes
+- Locations in other worlds will no longer make the timer count down past 0.
+- Multiverse worlds now work with locations (probably?).
+- NovaRaids will now load in singleplayer.
+- Battles now stop properly to avoid issues such as trick item stealing, and mega evolution not reverting.
+- Boss clones will now (properly) disappear when debug is false.
+- Webhooks follow the config now for automatically deleting.
+- If a border radius is less than 30, and Pokémon are set to be visible in config.json, they will get teleported to the border radius instead of being locked at 30.
+- If a player deals damage to the boss, but loses the battle, the damage they dealt will be registered rather than it being 0.
+- The `species_override` catch setting is now functional
+- Players will no longer receive a catch encounter if they leave the raid
+- Pokemon will no longer receive EXP from raid bosses.
+- Boss battle's flee-distance is now set to the arena's border radius x 2, effectively preventing fleeing from boss battles.
+- Catch encounters and rewards with the "participating" placement will now include.. participating players :)
+- Certain timezones will now properly parse for schedules
+---
 # Nova Raids Beta v0.3.0 - The Customization Update!
 
 If I missed anything... whoops :) I did my best
@@ -202,7 +293,7 @@ GUI Context Placeholders:
 - Each boss now gets their own phase timers, specified in this section.
 - `heal_party_on_challenge` will heal the player's party as they challenge the boss (will not heal if the party is all fainted).
 - Added a contraband section for boss-specific contraband.
-- Added a bossbars section to reference a bossbar for each phase for this boss, this will override the selected boss bars in the category settings.
+- Added a bossbars section to reference a bossbar for each phase for this boss; this will override the selected boss bars in the category settings.
 - Moved `rewards_override` section here, renamed to `reward_distribution`. More information in the `settings.json` changelog details.
 
 **Catch Settings Section Changes:**

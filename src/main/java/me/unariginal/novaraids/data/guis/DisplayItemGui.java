@@ -1,28 +1,31 @@
 package me.unariginal.novaraids.data.guis;
 
+import com.google.gson.JsonObject;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class DisplayItemGui extends BaseGuiData {
-    public GuiButton display_button;
+    public GuiButton displayButton;
 
-    public DisplayItemGui(String title,
+    public DisplayItemGui(JsonObject guiObject,
+                          String title,
                           int rows,
                           List<String> layout,
-                          GuiButton background_button,
-                          GuiButton close_button,
-                          GuiButton next_button,
-                          GuiButton previous_button,
-                          GuiButton display_button) {
-        super(title, rows, layout, background_button, close_button, next_button, previous_button);
-        this.display_button = display_button;
+                          GuiButton backgroundButton,
+                          GuiButton closeButton,
+                          GuiButton nextButton,
+                          GuiButton previousButton,
+                          GuiButton displayButton) {
+        super(guiObject, title, rows, layout, backgroundButton, closeButton, nextButton, previousButton);
+        this.displayButton = displayButton;
     }
 
     public int displaySlotTotal() {
         int count = 0;
         for (String line : layout) {
             for (char c : line.toCharArray()) {
-                if (c == display_button.symbol().charAt(0)) {
+                if (c == displayButton.symbol().charAt(0)) {
                     count++;
                 }
             }
@@ -35,7 +38,7 @@ public class DisplayItemGui extends BaseGuiData {
         int slot = 0;
         for (String line : layout) {
             for (char c : line.toCharArray()) {
-                if (c == display_button.symbol().charAt(0)) {
+                if (c == displayButton.symbol().charAt(0)) {
                     slots.add(slot);
                 }
                 slot++;

@@ -1,11 +1,11 @@
 package me.unariginal.novaraids.config;
 
-import com.google.gson.JsonElement;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import me.unariginal.novaraids.NovaRaids;
 import me.unariginal.novaraids.data.BossbarData;
-import me.unariginal.novaraids.data.Location;
 import me.unariginal.novaraids.data.bosssettings.Boss;
 import net.fabricmc.loader.api.FabricLoader;
 import net.kyori.adventure.bossbar.BossBar;
@@ -15,87 +15,129 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BossbarsConfig {
-    public List<BossbarData> bossbars = new ArrayList<>();
+    public List<BossbarData> bossbars = new ArrayList<>(
+            List.of(
+                    new BossbarData(
+                            "setup_phase_example",
+                            BossBar.Color.BLUE,
+                            BossBar.Overlay.PROGRESS,
+                            "<blue>Prepare for battle against %boss.form% %boss.species%!",
+                            true,
+                            "<gold>Raid starts in %raid.phase_timer%"
+                    ),
+                    new BossbarData(
+                            "fight_phase_example",
+                            BossBar.Color.RED,
+                            BossBar.Overlay.NOTCHED_20,
+                            "<red>Boss %boss.form% %boss.species%",
+                            true,
+                            "<red>Raid ends in %raid.phase_timer% <dark_gray>| <red>HP %boss.currenthp%/%boss.maxhp%"
+                    ),
+                    new BossbarData(
+                            "pre_catch_phase_example",
+                            BossBar.Color.RED,
+                            BossBar.Overlay.PROGRESS,
+                            "<red>Catching event starts soon, get to a safe place!",
+                            true,
+                            "<red>Catching event starts in %raid.phase_timer%"
+                    ),
+                    new BossbarData(
+                            "catch_phase_example",
+                            BossBar.Color.YELLOW,
+                            BossBar.Overlay.PROGRESS,
+                            "<yellow>Time to catch %boss.form% %boss.species%",
+                            true,
+                            "<yellow>Catching event ends in %raid.phase_timer%"
+                    )
+            )
+    );
 
     public BossbarsConfig() {
         try {
             loadConfig();
         } catch (IOException | NullPointerException | UnsupportedOperationException e) {
-            NovaRaids.INSTANCE.loaded_properly = false;
-            NovaRaids.INSTANCE.logError("[RAIDS] Failed to load bossbars file. " + e.getMessage());
-            for (StackTraceElement element : e.getStackTrace()) {
-                NovaRaids.INSTANCE.logError("  " + element.toString());
-            }
+            NovaRaids.LOADED = false;
+            NovaRaids.LOGGER.error("[NovaRaids] Failed to load bossbars file. ", e);
         }
     }
 
     public void loadConfig() throws IOException, NullPointerException, UnsupportedOperationException {
         File rootFolder = FabricLoader.getInstance().getConfigDir().resolve("NovaRaids").toFile();
-        if (!rootFolder.exists()) {
-            rootFolder.mkdirs();
-        }
+        if (!rootFolder.exists()) rootFolder.mkdirs();
 
         File file = FabricLoader.getInstance().getConfigDir().resolve("NovaRaids/bossbars.json").toFile();
-        if (file.createNewFile()) {
-            InputStream stream = NovaRaids.class.getResourceAsStream("/raid_config_files/bossbars.json");
-            assert stream != null;
-            OutputStream out = new FileOutputStream(file);
 
-            byte[] buffer = new byte[1024];
-            int length;
-            while ((length = stream.read(buffer)) > 0) {
-                out.write(buffer, 0, length);
-            }
+        JsonObject config = new JsonObject();
+        if (file.exists()) config = JsonParser.parseReader(new FileReader(file)).getAsJsonObject();
 
-            stream.close();
-            out.close();
-        }
-
-        JsonElement root = JsonParser.parseReader(new FileReader(file));
-        assert root != null;
-        JsonObject config = root.getAsJsonObject();
-
-        String location = "bossbars";
+        if (!config.keySet().isEmpty()) bossbars.clear();
 
         for (String key : config.keySet()) {
-            JsonObject bossbar_object = config.getAsJsonObject(key);
+            JsonObject bossbarObject = config.getAsJsonObject(key);
             String color = "blue";
-            if (ConfigHelper.checkProperty(bossbar_object, "bar_color", location)) {
-                color = bossbar_object.get("bar_color").getAsString();
-            }
-            BossBar.Color bar_color = BossBar.Color.BLUE;
+            if (bossbarObject.has("bar_color"))
+                color = bossbarObject.get("bar_color").getAsString();
+            bossbarObject.remove("bar_color");
+            bossbarObject.addProperty("bar_color", color);
+
+            BossBar.Color bar_color;
             try {
                 bar_color = BossBar.Color.valueOf(color.toUpperCase());
             } catch (IllegalArgumentException e) {
-                NovaRaids.INSTANCE.logError("[RAIDS] Invalid bossbar color: " + color);
+                bar_color = BossBar.Color.BLUE;
+                NovaRaids.INSTANCE.logError("Invalid bossbar color: " + color);
             }
+
             String style = "progress";
-            if (ConfigHelper.checkProperty(bossbar_object, "bar_style", location)) {
-                style = bossbar_object.get("bar_style").getAsString();
-            }
-            BossBar.Overlay bar_style = BossBar.Overlay.PROGRESS;
+            if (bossbarObject.has("bar_style"))
+                style = bossbarObject.get("bar_style").getAsString();
+            bossbarObject.remove("bar_style");
+            bossbarObject.addProperty("bar_style", style);
+
+            BossBar.Overlay bar_style;
             try {
                 bar_style = BossBar.Overlay.valueOf(style.toUpperCase());
             } catch (IllegalArgumentException e) {
-                NovaRaids.INSTANCE.logError("[RAIDS] Invalid bossbar style: " + style);
+                bar_style = BossBar.Overlay.PROGRESS;
+                NovaRaids.INSTANCE.logError("Invalid bossbar style: " + style);
             }
+
             String text = "<red>If you're seeing this message your config is wrong!";
-            if (ConfigHelper.checkProperty(bossbar_object, "bar_text", location)) {
-                text = bossbar_object.get("bar_text").getAsString();
-            }
+            if (bossbarObject.has("bar_text"))
+                text = bossbarObject.get("bar_text").getAsString();
+            bossbarObject.remove("bar_text");
+            bossbarObject.addProperty("bar_text", text);
+
             boolean use_actionbar = true;
-            if (ConfigHelper.checkProperty(bossbar_object, "use_actionbar", location)) {
-                use_actionbar = bossbar_object.get("use_actionbar").getAsBoolean();
-            }
+            if (bossbarObject.has("use_actionbar"))
+                use_actionbar = bossbarObject.get("use_actionbar").getAsBoolean();
+
             String actionbar_text = "<red>If you're seeing this your config is wrong!";
-            if (use_actionbar) {
-                if (ConfigHelper.checkProperty(bossbar_object, "actionbar_text", location)) {
-                    actionbar_text = bossbar_object.get("actionbar_text").getAsString();
-                }
-            }
+            if (bossbarObject.has("actionbar_text"))
+                actionbar_text = bossbarObject.get("actionbar_text").getAsString();
+            bossbarObject.remove("actionbar_text");
+            bossbarObject.addProperty("actionbar_text", actionbar_text);
 
             bossbars.add(new BossbarData(key, bar_color, bar_style, text, use_actionbar, actionbar_text));
         }
+
+        for (BossbarData data : bossbars) {
+            config.remove(data.name());
+            JsonObject bossBarObject = new JsonObject();
+            bossBarObject.addProperty("bar_color", data.barColor().name());
+            bossBarObject.addProperty("bar_style", data.barStyle().name());
+            bossBarObject.addProperty("bar_text", data.barText());
+            bossBarObject.addProperty("use_actionbar", data.useActionbar());
+            bossBarObject.addProperty("actionbar_text", data.actionbarText());
+            config.add(data.name(), bossBarObject);
+        }
+
+        file.delete();
+        file.createNewFile();
+        Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+        Writer writer = new FileWriter(file);
+        gson.toJson(config, writer);
+        writer.close();
     }
 
     public BossbarData getBossbar(String id) {
@@ -111,31 +153,31 @@ public class BossbarsConfig {
         String bossbar_id = "";
         switch (phase) {
             case "setup":
-                if (boss.raid_details().setup_bossbar().isEmpty()) {
-                    bossbar_id = NovaRaids.INSTANCE.bossesConfig().getCategory(boss.category_id()).setup_bossbar();
+                if (boss.raidDetails().setupBossbar().isEmpty()) {
+                    bossbar_id = NovaRaids.INSTANCE.bossesConfig().getCategory(boss.categoryId()).setupBossbar();
                 } else {
-                    bossbar_id = boss.raid_details().setup_bossbar();
+                    bossbar_id = boss.raidDetails().setupBossbar();
                 }
                 break;
             case "fight":
-                if (boss.raid_details().fight_bossbar().isEmpty()) {
-                    bossbar_id = NovaRaids.INSTANCE.bossesConfig().getCategory(boss.category_id()).fight_bossbar();
+                if (boss.raidDetails().fightBossbar().isEmpty()) {
+                    bossbar_id = NovaRaids.INSTANCE.bossesConfig().getCategory(boss.categoryId()).fightBossbar();
                 } else {
-                    bossbar_id = boss.raid_details().fight_bossbar();
+                    bossbar_id = boss.raidDetails().fightBossbar();
                 }
                 break;
             case "pre_catch":
-                if (boss.raid_details().pre_catch_bossbar().isEmpty()) {
-                    bossbar_id = NovaRaids.INSTANCE.bossesConfig().getCategory(boss.category_id()).pre_catch_bossbar();
+                if (boss.raidDetails().preCatchBossbar().isEmpty()) {
+                    bossbar_id = NovaRaids.INSTANCE.bossesConfig().getCategory(boss.categoryId()).preCatchBossbar();
                 } else {
-                    bossbar_id = boss.raid_details().pre_catch_bossbar();
+                    bossbar_id = boss.raidDetails().preCatchBossbar();
                 }
                 break;
             case "catch":
-                if (boss.raid_details().catch_bossbar().isEmpty()) {
-                    bossbar_id = NovaRaids.INSTANCE.bossesConfig().getCategory(boss.category_id()).catch_bossbar();
+                if (boss.raidDetails().catchBossbar().isEmpty()) {
+                    bossbar_id = NovaRaids.INSTANCE.bossesConfig().getCategory(boss.categoryId()).catchBossbar();
                 } else {
-                    bossbar_id = boss.raid_details().catch_bossbar();
+                    bossbar_id = boss.raidDetails().catchBossbar();
                 }
                 break;
         }
